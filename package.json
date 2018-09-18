@@ -1,0 +1,23 @@
+{
+  "name": "cognitoken-verifier",
+  "version": "0.0.4",
+  "description": "Verify AWS Cognito user pool JSON Web Token ",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "henrybee",
+  "license": "ISC",
+  "dependencies": {
+    "@types/jsonwebtoken": "^7.2.8",
+    "@types/es6-promise": "^3.3.0",
+    "jsonwebtoken": "^8.3.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/es6-promise": "^3.3.0",
+    "jsonwebtoken": "^8.3.0"
+  }
+}
