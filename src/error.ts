@@ -1,6 +1,6 @@
 export class CognitokenError extends Error {
 
-    private type: string;
+    public type: string;
 
     constructor(type: string, message: string) {
         super(message);
@@ -8,4 +8,5 @@ export class CognitokenError extends Error {
         this.type = type;
         Error.captureStackTrace(this, this.constructor);
     }
+
 }

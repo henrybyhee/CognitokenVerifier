@@ -1,4 +1,4 @@
 export declare class CognitokenError extends Error {
-    private type;
+    type: string;
     constructor(type: string, message: string);
 }
