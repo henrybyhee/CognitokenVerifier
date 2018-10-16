@@ -18,7 +18,7 @@ export interface IPayload {
     email_verified: boolean;
     event_id: string;
     token_use: string;
-    auth_time: Number;
+    auth_time: number;
     iss: string;
     "cognito:username": string;
     exp: number;
@@ -35,10 +35,9 @@ export interface IRSAToken {
 const composePromises = (
     initialValue: string,
     ...functions) => {
-    functions.reduce(
+    return functions.reduce(
         (accum, func) => Promise.resolve(accum).then(func),
-        initialValue,
-    );
+        initialValue);
 };
 
 const jwtVerifyPromise = promisify(jwt.verify);
@@ -71,13 +70,13 @@ const hasHeaderAndKID = (decoded: IRSAToken) => {
 const retrieveBufferFromMap = (
     pemMap: IRSAMap[]) => (decoded: IRSAToken) => {
         const kid = decoded.header.kid;
-        const { buffer } = pemMap.filter((map) => map.key === kid)[0];
+        const filteredKey = pemMap.filter((map) => map.key === kid);
 
-        if (!buffer) {
+        if (filteredKey.length === 0 || !filteredKey[0].buffer) {
             throw new CognitokenError("keyBufferMapError", "buffer is not found on the map");
         }
 
-        return buffer;
+        return filteredKey[0].buffer;
     };
 
 const JWTSignatureValidate = (idToken: string) => (pem: Buffer) => {
@@ -87,12 +86,20 @@ const JWTSignatureValidate = (idToken: string) => (pem: Buffer) => {
         });
 };
 
+/**
+ *
+ * @param clientId Array of app client ids associated with User Pool
+ * @param issuer Should match domain+user pool id
+ * @param timeNow UTC time now
+ * @param accessType 'id' or 'access'
+ */
 const JWTClaimVerify = (
-    clientId: string,
+    clientIds: string[],
     issuer: string,
     timeNow: number,
     accessType: string) => (payload: IPayload) => {
-        const condition = payload.aud === clientId &&
+
+        const condition = clientIds.reduce((prev, curr) => prev || (payload.aud === curr), false) &&
             payload.iss === issuer &&
             payload.exp > timeNow &&
             payload.token_use === accessType;
@@ -111,16 +118,16 @@ export class CognitokenVerifier {
      *  https://docs.aws.amazon.com/cognito/latest/developerguide/
      *  amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
      *
-     * @param {string} appId app client ID
+     * @param {string[]} appId app client ID
      * @param {string} issuer Issuer https://cognito-idp.us-east-1.amazonaws.com/<userpoolID>
      * @param {Array} keyBufferMap Array consisting of associative map storing the kid
      * and file buffer converted from JSON Web Keys in PEM Format
      * ie: [{key: 'abcdef', buffer: <Buffer >}, {key: 'ghijk', buffer: <Buffer >}]
      */
-    public appId: string;
+    public appId: string[];
     public issuer: string;
     public keyBufferMap: IRSAMap[];
-    constructor(appId: string, issuer: string, keyBufferMap: IRSAMap[]) {
+    constructor(appId: string[], issuer: string, keyBufferMap: IRSAMap[]) {
         this.keyBufferMap = keyBufferMap;
         this.appId = appId;
         this.issuer = issuer;

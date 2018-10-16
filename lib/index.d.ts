@@ -14,7 +14,7 @@ export interface IPayload {
     email_verified: boolean;
     event_id: string;
     token_use: string;
-    auth_time: Number;
+    auth_time: number;
     iss: string;
     "cognito:username": string;
     exp: number;
@@ -32,16 +32,16 @@ export declare class CognitokenVerifier {
      *  https://docs.aws.amazon.com/cognito/latest/developerguide/
      *  amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
      *
-     * @param {string} appId app client ID
+     * @param {string[]} appId app client ID
      * @param {string} issuer Issuer https://cognito-idp.us-east-1.amazonaws.com/<userpoolID>
      * @param {Array} keyBufferMap Array consisting of associative map storing the kid
      * and file buffer converted from JSON Web Keys in PEM Format
      * ie: [{key: 'abcdef', buffer: <Buffer >}, {key: 'ghijk', buffer: <Buffer >}]
      */
-    appId: string;
+    appId: string[];
     issuer: string;
     keyBufferMap: IRSAMap[];
-    constructor(appId: string, issuer: string, keyBufferMap: IRSAMap[]);
+    constructor(appId: string[], issuer: string, keyBufferMap: IRSAMap[]);
     /**
      * Executes the complete verification process
      * @param {string} token JSON token returned from Cognito Session
@@ -49,5 +49,5 @@ export declare class CognitokenVerifier {
      *
      * @returns {Promise} onSuccess: returns decoded token, onFailure: returns CognitonError
      */
-    verify(token: string, use: string): void;
+    verify(token: string, use: string): any;
 }
