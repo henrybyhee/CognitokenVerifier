@@ -21,6 +21,17 @@ export interface IPayload {
     iat: number;
     email: string;
 }
+export interface ICognitoJWK {
+    kid: string;
+    alg: string;
+    kty: string;
+    e: string;
+    n: string;
+    use: string;
+}
+export interface ICognitoJWKSet {
+    [key: string]: ICognitoJWK[];
+}
 export interface IRSAToken {
     header: IHeader;
     payload: IPayload;
@@ -34,14 +45,13 @@ export declare class CognitokenVerifier {
      *
      * @param {string[]} appId app client ID
      * @param {string} issuer Issuer https://cognito-idp.us-east-1.amazonaws.com/<userpoolID>
-     * @param {Array} keyBufferMap Array consisting of associative map storing the kid
-     * and file buffer converted from JSON Web Keys in PEM Format
-     * ie: [{key: 'abcdef', buffer: <Buffer >}, {key: 'ghijk', buffer: <Buffer >}]
+     * @param {Array} JwkSet unique public key for every user pool, retrievable at issuer/.well-known/jwks.json
      */
     appId: string[];
     issuer: string;
-    keyBufferMap: IRSAMap[];
-    constructor(appId: string[], issuer: string, keyBufferMap: IRSAMap[]);
+    jwkSet: ICognitoJWKSet;
+    constructor(appId: string[], issuer: string, jwkSet?: ICognitoJWKSet);
+    getJWKIfUndefined(jwkset: ICognitoJWKSet | undefined): Promise<any>;
     /**
      * Executes the complete verification process
      * @param {string} token JSON token returned from Cognito Session
@@ -49,5 +59,5 @@ export declare class CognitokenVerifier {
      *
      * @returns {Promise} onSuccess: returns decoded token, onFailure: returns CognitonError
      */
-    verify(token: string, use: string): any;
+    verify(token: string, use: string): Promise<any>;
 }

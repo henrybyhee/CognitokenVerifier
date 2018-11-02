@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
+import jwkToPem = require("jwk-to-pem");
+import request from "request";
 import { promisify } from "util";
 import { CognitokenError } from "./error";
-
 export interface IRSAMap {
     key: string;
     buffer: Buffer;
@@ -26,6 +27,18 @@ export interface IPayload {
     email: string;
 }
 
+export interface ICognitoJWK {
+    kid: string;
+    alg: string;
+    kty: string;
+    e: string;
+    n: string;
+    use: string;
+}
+
+export interface ICognitoJWKSet {
+    [key: string]: ICognitoJWK[];
+}
 export interface IRSAToken {
     header: IHeader;
     payload: IPayload;
@@ -67,20 +80,19 @@ const hasHeaderAndKID = (decoded: IRSAToken) => {
     return decoded;
 };
 
-const retrieveBufferFromMap = (
-    pemMap: IRSAMap[]) => (decoded: IRSAToken) => {
-        const kid = decoded.header.kid;
-        const filteredKey = pemMap.filter((map) => map.key === kid);
+const selectJWKfromKeys = (jwkSet: ICognitoJWKSet) => (decoded: IRSAToken) => {
+    const filteredKey = jwkSet.keys.
+        filter((key) => key.kid === decoded.header.kid);
 
-        if (filteredKey.length === 0 || !filteredKey[0].buffer) {
-            throw new CognitokenError("keyBufferMapError", "buffer is not found on the map");
-        }
+    if (filteredKey.length === 0) {
+        throw new CognitokenError("selectJWKfromKeys", "kid is not found on set");
+    }
+    return filteredKey[0];
+};
 
-        return filteredKey[0].buffer;
-    };
-
-const JWTSignatureValidate = (idToken: string) => (pem: Buffer) => {
-    return jwtVerifyPromise(idToken, pem, { algorithms: ["RS256"] })
+const JWTSignatureValidate = (idToken: string) => (jwk: ICognitoJWK) => {
+    const pem = jwkToPem(jwk);
+    return jwtVerifyPromise(idToken, pem)
         .catch((err: Error) => {
             throw new CognitokenError(err.name, err.message);
         });
@@ -120,19 +132,39 @@ export class CognitokenVerifier {
      *
      * @param {string[]} appId app client ID
      * @param {string} issuer Issuer https://cognito-idp.us-east-1.amazonaws.com/<userpoolID>
-     * @param {Array} keyBufferMap Array consisting of associative map storing the kid
-     * and file buffer converted from JSON Web Keys in PEM Format
-     * ie: [{key: 'abcdef', buffer: <Buffer >}, {key: 'ghijk', buffer: <Buffer >}]
+     * @param {Array} JwkSet unique public key for every user pool, retrievable at issuer/.well-known/jwks.json
      */
     public appId: string[];
     public issuer: string;
-    public keyBufferMap: IRSAMap[];
-    constructor(appId: string[], issuer: string, keyBufferMap: IRSAMap[]) {
-        this.keyBufferMap = keyBufferMap;
+    public jwkSet!: ICognitoJWKSet;
+    constructor(appId: string[], issuer: string, jwkSet?: ICognitoJWKSet) {
         this.appId = appId;
         this.issuer = issuer;
+        this.getJWKIfUndefined(jwkSet)
+            .then((jwk) => this.jwkSet = jwk)
+            .catch((err) => console.log(err));
+
     }
 
+    public getJWKIfUndefined(jwkset: ICognitoJWKSet | undefined) {
+        return new Promise<any>(
+            (resolve, reject) => {
+                if (jwkset) {
+                    resolve(jwkset);
+                } else {
+                    console.log("Getting Jwkset from server");
+                    request(`${this.issuer}/.well-known/jwks.json`, (err, response, body) => {
+                        if (err || response.statusCode !== 200) {
+                            reject(`Cannot retrieve jwk set from server ${err}`);
+                        } else {
+                            resolve(JSON.parse(body));
+                        }
+                    });
+
+                }
+            });
+
+    }
     /**
      * Executes the complete verification process
      * @param {string} token JSON token returned from Cognito Session
@@ -142,13 +174,16 @@ export class CognitokenVerifier {
      */
     public verify(token: string, use: string) {
         const timeNow = new Date().getTime() / 1000;
-        return composePromises(
-            token,
-            JWTStructuralCheck,
-            decodeJWT, hasHeaderAndKID,
-            retrieveBufferFromMap(this.keyBufferMap),
-            JWTSignatureValidate(token),
-            JWTClaimVerify(this.appId, this.issuer, timeNow, use),
-        );
+
+        return this.getJWKIfUndefined(this.jwkSet)
+            .then((jwkset) => composePromises(
+                token,
+                JWTStructuralCheck,
+                decodeJWT, hasHeaderAndKID,
+                selectJWKfromKeys(jwkset),
+                JWTSignatureValidate(token),
+                JWTClaimVerify(this.appId, this.issuer, timeNow, use),
+            ))
+            ;
     }
 }

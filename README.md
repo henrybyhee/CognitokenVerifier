@@ -13,20 +13,10 @@ const { CognitokenVerifier } = require('cognitoken-verifier');
 // Parameters for CognitoVerifier class
 const appClientId = '<Enter app client Id of User Pool>';
 const issuer = 'https://cognito-idp.<REGION>.amazonaws.com/<USERPOOLID>';
-const RSAMap = [
-    {
-        key:'<KID of the first public key>',
-        buffer: '<Buffer of first JSON Web Token in pem format>'// use jwk-to-pem
-    },
-    {
-        key:'<KID of the second public key>',
-        buffer: 'Buffer of second JSON Web Token in pem format>'// use jwk-to-pem
-    }
-];
 
-const verifier = new CognitokenVerifier(appClientId, issuer, RSAMap);
+const verifier = new CognitokenVerifier(appClientId, issuer);
 
-verifier.verify('<Token>', '<id/access>')
+verifier.verify(['<Tokens>'], '<id/access>')
     .then(payload=>{
         //Verification Success
     })
