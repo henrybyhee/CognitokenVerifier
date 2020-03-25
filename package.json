@@ -1,6 +1,6 @@
 {
   "name": "cognitoken-verifier",
-  "version": "0.0.21",
+  "version": "1.0.0",
   "description": "Verify AWS Cognito user pool JSON Web Token ",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
