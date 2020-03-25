@@ -1,24 +1,26 @@
-export interface IRSAMap {
-  key: string;
-  buffer: Buffer;
-}
-
-export interface IHeader {
-  kid: string;
-  alg: string;
-}
-export interface IPayload {
-  at_hash?: string;
+export interface ITokenPayload {
   sub: string;
-  aud?: string;
-  email_verified?: boolean;
-  event_id?: string;
+  event_id: string;
   token_use: string;
   auth_time: number;
   iss: string;
-  "cognito:username"?: string;
   exp: number;
   iat: number;
+}
+
+export interface IAccessTokenPayload extends ITokenPayload {
+  scope: string;
+  jti: string;
+  client_id: string;
+  username: string;
+}
+
+export interface IIdTokenPayload extends ITokenPayload {
+  email_verified: boolean;
+  phone_number_verified: boolean;
+  aud: string;
+  name: string;
+  phone_number: string;
   email: string;
 }
 
@@ -32,10 +34,16 @@ export interface ICognitoJWK {
 }
 
 export interface ICognitoJWKSet {
-  [key: string]: ICognitoJWK[];
+  keys: ICognitoJWK[];
 }
-export interface IRSAToken {
-  header: IHeader;
-  payload: IPayload;
+
+export interface IJwtHeader {
+  kid: string;
+  alg: string;
+}
+
+export interface ICognitoJwt {
+  header: IJwtHeader;
+  payload: IAccessTokenPayload | IIdTokenPayload;
   signature: string;
 }
