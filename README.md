@@ -8,20 +8,22 @@ npm install cognitoken-verifier
 
 # Usage
 ```javascript
-const { CognitokenVerifier } = require('cognitoken-verifier');
+const { CognitoVerifier } = require('cognitoken-verifier');
 
-// Parameters for CognitoVerifier class
-const appClientId = '<Enter app client Id of User Pool>';
-const issuer = 'https://cognito-idp.<REGION>.amazonaws.com/<USERPOOLID>';
+// Required params
+const appClientId = '<XXXXXXXX>'; // Only for idToken
+const userPoolId = 'ap-southeat-1_XXXXXX';
 
-const verifier = new CognitokenVerifier(appClientId, issuer);
 
-verifier.verify(['<Tokens>'], '<id/access>')
-    .then(payload=>{
-        //Verification Success
-    })
-    .catch(err=>{
-        // Verification Fail
-        // returns CognitokenError class
-    })
+const verifier = new CognitoVerifier(appClientId, userPoolId);
+
+const IdToken = "XXXXXXXXXXX";
+verifier.verifyToken(idToken).then((payload)=>{
+    // payload.sub
+})
+
+const accessToken = "XXXXXXX";
+verifier.verifyToken(accessToken).then((payload)=>{
+    // payload.sub
+})
 ```

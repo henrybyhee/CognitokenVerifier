@@ -1,6 +1,6 @@
 {
   "name": "cognitoken-verifier",
-  "version": "0.0.21",
+  "version": "1.0.0",
   "description": "Verify AWS Cognito user pool JSON Web Token ",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -11,9 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "@types/jsonwebtoken": "^7.2.8",
+    "@types/node-cache": "^4.2.5",
     "axios": "^0.18.0",
     "jsonwebtoken": "^8.3.0",
     "jwk-to-pem": "^2.0.0",
+    "node-cache": "^5.1.0",
     "request": "^2.88.0",
     "tslint": "^5.11.0",
     "typescript": "^3.0.3"

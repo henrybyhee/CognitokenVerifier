@@ -1,39 +1,91 @@
 import "mocha";
-import { expect, assert } from "chai";
-import { JWTStructuralCheck, hasHeaderAndKID, decodeJWT } from "./index";
+import { expect } from "chai";
+import { hasThreeSections, verifyClaims } from "./utils";
 import { CognitokenError } from "./error";
 
-describe("Test Step 1: Confirm the structure of JWT", () => {
-  it("Should return token if it has 3 parts.", () => {
-    const token =
-      "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJPbmxpbmUgSldUIEJ1aWxkZXIiLCJpYXQiOjE1ODUwNjYzMTEsImV4cCI6MTYxNjYwMjMxMSwiYXVkIjoid3d3LmV4YW1wbGUuY29tIiwic3ViIjoianJvY2tldEBleGFtcGxlLmNvbSIsIkdpdmVuTmFtZSI6IkpvaG5ueSIsIlN1cm5hbWUiOiJSb2NrZXQiLCJFbWFpbCI6Impyb2NrZXRAZXhhbXBsZS5jb20iLCJSb2xlIjpbIk1hbmFnZXIiLCJQcm9qZWN0IEFkbWluaXN0cmF0b3IiXX0.nncH3DlaaL0D9-VtkLX8lQNQQT8KCX6w6uuQoCe7JE0";
-    expect(JWTStructuralCheck(token)).to.equal(token);
+describe("Test Step 1: Ensure JWT Structural Integrity", () => {
+  it("Should return True if string has 3 parts", () => {
+    const token = "AAA.BBBB.CCCC";
+    expect(hasThreeSections(token)).equal(true);
   });
 
-  it("Should throw error if it has less than 3 parts", () => {
-    const token = "";
-    assert.throws(() => JWTStructuralCheck(token), CognitokenError);
+  it("Should return False if string has less than 3 parts", () => {
+    const token = "AAA.BBB";
+    expect(hasThreeSections(token)).equal(false);
   });
 });
 
-describe("Test Step 2: Validate JWT Signature", () => {
-  it("Should return token if it has header and key Id.", () => {
-    const decoded = {
-      header: {
-        alg: "RS256",
-        kid: "EbbBy+6kFRMG4vvJRhbLeQnI4myic1qDKBTnbg8ykBU="
-      },
-      payload: {
-        auth_time: 1000000,
-        email: "hello@example.com",
-        exp: 1000000,
-        iat: 1000000,
-        iss: "auth.example.com",
-        sub: "Hello",
-        token_use: "id"
-      },
-      signature: "Hello World"
+describe("Test Step 3: Verify Claim", () => {
+  it("Should verify Access token payload.", () => {
+    const payload = {
+      sub: "User",
+      event_id: "SignIn",
+      token_use: "access",
+      auth_time: 1585153143,
+      iss: "Cognito",
+      exp: Infinity,
+      iat: 1585153143,
+      scope: "cognito:signin",
+      jti: "789-789-789",
+      client_id: "CLIENT_ABC",
+      username: "USER_ABC"
     };
-    expect(hasHeaderAndKID(decoded)).to.equal(decoded);
+    expect(verifyClaims("", "Cognito", payload)).equal(true);
+  });
+
+  it("Should verify Id Token payload", () => {
+    const payload = {
+      sub: "User",
+      event_id: "SignIn",
+      token_use: "id",
+      auth_time: 1585153143,
+      iss: "Cognito",
+      exp: Infinity,
+      iat: 1585153143,
+      email_verified: true,
+      phone_number_verified: true,
+      aud: "RECIPIENT",
+      name: "USER",
+      phone_number: "123456",
+      email: "example@gmail.com"
+    };
+    expect(verifyClaims("RECIPIENT", "Cognito", payload)).equal(true);
+  });
+
+  it("Should not verify if token is expired.", () => {
+    const payload = {
+      sub: "User",
+      event_id: "SignIn",
+      token_use: "access",
+      auth_time: 1585153143,
+      iss: "Cognito",
+      exp: 1585153143,
+      iat: 1585153143,
+      scope: "cognito:signin",
+      jti: "789-789-789",
+      client_id: "CLIENT_ABC",
+      username: "USER_ABC"
+    };
+    expect(verifyClaims("", "Cognito", payload)).equal(false);
+  });
+
+  it("Should throw error if token use is neither 'access' nor 'id'", () => {
+    const payload = {
+      sub: "User",
+      event_id: "SignIn",
+      token_use: "something",
+      auth_time: 1585153143,
+      iss: "Cognito",
+      exp: 1585153143,
+      iat: 1585153143,
+      scope: "cognito:signin",
+      jti: "789-789-789",
+      client_id: "CLIENT_ABC",
+      username: "USER_ABC"
+    };
+
+    expect(() => verifyClaims("", "Cognito", payload)).to.throw(
+      CognitokenError
+    );
   });
 });
