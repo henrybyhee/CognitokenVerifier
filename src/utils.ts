@@ -21,28 +21,28 @@ export const hasThreeSections = (token: string): boolean =>
  * @param token token in use.
  * @param publicKeys JWK prublic keys of this User pool
  */
-export const validateJwtSignature = (
+export const validateCognitoJwtSignature = (
   token: string,
   publicKeys: ICognitoJWKSet
 ): Promise<IAccessTokenPayload | IIdTokenPayload> => {
   const decoded = jwt.decode(token, { complete: true });
   if (decoded == null) {
     throw new CognitokenError(
-      "ValidateJwtSignatureError",
+      "validateCognitoJwtSignatureError",
       "JWT Token is not valid"
     );
   }
   const { header } = decoded as ICognitoJwt;
   if (header == null) {
     throw new CognitokenError(
-      "ValidateJwtSignatureError",
+      "validateCognitoJwtSignatureError",
       "header is not found in decoded payload"
     );
   }
   const { kid } = header as IJwtHeader;
   if (kid == null) {
     throw new CognitokenError(
-      "ValidateJwtSignatureError",
+      "validateCognitoJwtSignatureError",
       "Key ID is missing in decoded header"
     );
   }
@@ -51,7 +51,7 @@ export const validateJwtSignature = (
   const signingPublicKey = publicKeys.keys.find(pubKey => pubKey.kid === kid);
   if (signingPublicKey == null) {
     throw new CognitokenError(
-      "ValidateJwtSignatureError",
+      "validateCognitoJwtSignatureError",
       `No matching pubic key found with Key Id (${kid}) in token.`
     );
   }

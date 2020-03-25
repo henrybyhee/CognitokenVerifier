@@ -3,7 +3,7 @@ import { CognitokenError } from "./error";
 import { ICognitoJWKSet } from "./interfaces";
 import {
   hasThreeSections,
-  validateJwtSignature,
+  validateCognitoJwtSignature,
   verifyClaims,
   buildIssuer
 } from "./utils";
@@ -40,7 +40,7 @@ export class CognitoVerifier {
 
     try {
       const pubKeys = await this.getUserPoolPublicKeys();
-      const payload = await validateJwtSignature(token, pubKeys);
+      const payload = await validateCognitoJwtSignature(token, pubKeys);
       const isVerified = verifyClaims(this.appId, this.issuer, payload);
       if (!isVerified) {
         throw new CognitokenError(
@@ -55,7 +55,7 @@ export class CognitoVerifier {
   }
 
   /**
-   * Get Public Keys from cahce, else Call API to minimize network calls.
+   * Get Public Keys from cachce, else Call API to minimize network calls.
    */
   private getUserPoolPublicKeys(): Promise<ICognitoJWKSet> {
     return new Promise(resolve => {
