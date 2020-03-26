@@ -10,7 +10,7 @@ import {
 import NodeCache from "node-cache";
 import { IAccessTokenPayload, IIdTokenPayload } from "./interfaces";
 
-export class CognitoVerifier {
+export class CognitokenVerifyService {
   private appId: string;
   private cache: NodeCache;
   private issuer: string;
@@ -22,13 +22,13 @@ export class CognitoVerifier {
   }
 
   /**
-   * verifyCognitoJwt produces a function that verifies jwt generated from
+   * verify function invokes 3 steps verification pipeline for token generated from
    * AWS Cognito. Validation is performed according to documentation
    * https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
    *
    * @param token Token in use.
    */
-  public async verifyToken(
+  public async verify(
     token: string
   ): Promise<IAccessTokenPayload | IIdTokenPayload> {
     if (!hasThreeSections(token)) {
